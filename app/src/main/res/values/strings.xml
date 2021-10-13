@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Buscaminas</string>
+    <string name="time_count">Time: </string>
+    <string name="bomb_count">Bombs: </string>
+    <string name="dif1">Easy</string>
+    <string name="dif2">Medium</string>
+    <string name="dif3">Hard</string>
+    <string name="newGame">New Game</string>
+    <string name="Cdif">Change difficulty</string>
+</resources>
