@@ -7,4 +7,5 @@
     <string name="dif3">Hard</string>
     <string name="newGame">New Game</string>
     <string name="Cdif">Change difficulty</string>
+    <string name="toast_text">User cancelled</string>
 </resources>
