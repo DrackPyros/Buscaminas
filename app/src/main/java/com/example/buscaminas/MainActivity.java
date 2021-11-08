@@ -102,10 +102,10 @@ public class MainActivity extends AppCompatActivity {
             for (int j = 0; j < matrix[0].length; j++){
                 findbomb[i][j] = 0;
                 ImageButton btn = new ImageButton(this);
-                //btn.setImageResource(R.drawable.);
                 btn.setOnClickListener(btListener);
                 btn.setId(aux);
                 tr.addView(btn);
+                matrix[i][j] = btn;
                 if (aux <= totalis){
                     aux ++;
                 }
@@ -121,6 +121,13 @@ public class MainActivity extends AppCompatActivity {
             for (int j = 0; j< findbomb.length; j++){
                 for (int x = 0; x<findbomb[0].length; x++){
                     System.out.print(findbomb[j][x]+" ");
+                    if (findbomb[j][x] == -1){
+                        matrix[j][x].setImageResource(R.drawable.minita);
+                        android.view.ViewGroup.LayoutParams params = matrix[j][x].getLayoutParams();
+                        params.height = 50;
+                        params.width = 5;
+                        matrix[j][x].setLayoutParams(params);
+                    }
                     /*int m = j+x;
                     if (m == view.getId()){
                         System.out.println("-----------------"+findbomb[j][x]);
@@ -150,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                 findbomb[z][ñ] = -1;
                 b[i] = aux;
             }
-            for(int i = 0; i < findbomb.length; i++) {
+            /*for(int i = 0; i < findbomb.length; i++) {
                 for (int j = 0; j < findbomb[0].length; j++) {
                     if (findbomb[i][j] != -1) {
                         if (i > 0) {
@@ -202,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     findbomb[i][j] = contador;
                 }
-            }
+            }*/
         }
     }
 
