@@ -6,17 +6,15 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
-import android.media.Image;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.transition.Explode;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -29,11 +27,8 @@ public class MainActivity extends AppCompatActivity {
 
     private TableLayout tl_table;
 
-    private Button bt_new;
-    private Button bt_change;
-
-    private static TextView tv_bombs;
-    private static TextView tv_dif;
+    private TextView tv_bombs;
+    private TextView tv_dif;
 
     public static int totalBombs;
     Chronometer chronometer;
@@ -43,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private static boolean[][] bandera;
     private boolean creado = false;
     private int totalis;
-    private Random rnd = new Random();
+    private final Random rnd = new Random();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,17 +47,14 @@ public class MainActivity extends AppCompatActivity {
 
         tl_table = findViewById(R.id.tl_table);
 
-        bt_new = findViewById(R.id.bt_new);
+        Button bt_new = findViewById(R.id.bt_new);
 
         tv_bombs = findViewById(R.id.tv_bombs);
         tv_dif = findViewById(R.id.tv_dif);
 
-
-
         bt_new.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Functions.Explode(chronometer);
                 cleanTable(tl_table);
                 openDiffActivity();
                 creado = false;
@@ -85,73 +77,119 @@ public class MainActivity extends AppCompatActivity {
                 });
         openDiffActivity();
     }
-    private void cleanTable(TableLayout table) {
-        int childCount = table.getChildCount();
-        table.removeViews(0, childCount);
-    }
+
     private void createMatrix() {
-        View.OnClickListener btListener = new View.OnClickListener() {
+        View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                create(view);
-                show(view);
+                createTable(view);
+                end(view);
+                updateUI(view);
+                explode(chronometer, view);
             }
-        } ;
-        int aux = 0;
+        };
+        View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                int resultado = view.getId() / findbomb.length;
+                int resto = view.getId() % findbomb.length;
+                if (!bandera[resultado][resto]) {
+                    bandera[resultado][resto] = true;
+
+                    ImageButton aux = matrix[resultado][resto];
+                    aux.setImageResource(R.drawable.bandera);
+                    aux.setPadding(0, 0, 0, 0);
+                    android.view.ViewGroup.LayoutParams params = aux.getLayoutParams();
+                    params.height = aux.getHeight();
+                    params.width = aux.getWidth();
+                    aux.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    aux.setLayoutParams(params);
+                }
+                else{
+                    bandera[resultado][resto] = false;
+                    matrix[resultado][resto].setImageResource(0);
+                }
+                return true;
+            }
+        };
+        int id = 0;
         for (int i = 0; i < matrix.length; i++){
             TableRow tr = new TableRow(this);
             for (int j = 0; j < matrix[0].length; j++){
                 findbomb[i][j] = 0;
                 ImageButton btn = new ImageButton(this);
-                btn.setOnClickListener(btListener);
+                btn.setOnClickListener(clickListener);
+                btn.setOnLongClickListener(longClickListener);
                 btn.setMinimumWidth(90);
                 btn.setMinimumHeight(90);
-                btn.setId(aux);
+                btn.setId(id);
                 tr.addView(btn);
                 matrix[i][j] = btn;
-                if (aux <= totalis){
-                    aux ++;
+                if (id <= totalis){
+                    id ++;
                 }
             }
             tl_table.addView(tr);
         }
-        //matrix[0][0].setImageResource(R.drawable.minita);
     }
 
-    private void show(View view) {
+    private void end(View view) {
         if (creado){
-            System.out.println("-----------------"+view.getId());
-            for (int j = 0; j< findbomb.length; j++){
-                for (int x = 0; x<findbomb[0].length; x++){
-                    System.out.print(findbomb[j][x]+" ");
-                    if (findbomb[j][x] == -1){
-                        //Log.d("<<<<>>>>>", "alto antes: "+matrix[j][x].getHeight());
-                        //Log.d("<<<<<<<>>>>>", "ancho antes: "+ matrix[j][x].getWidth());
-                        matrix[j][x].setImageResource(R.drawable.minita);
-                        android.view.ViewGroup.LayoutParams params = matrix[j][x].getLayoutParams();
-                        params.height = (int)(matrix[j][x].getHeight()* 0.8);
-                        params.width = (int) (matrix[j][x].getWidth()* 0.8);
-                        matrix[j][x].setScaleX(0.5f);
-                        matrix[j][x].setScaleY(0.5f);
-                        matrix[j][x].setCropToPadding(false);
-                        matrix[j][x].setLayoutParams(params);
-                        //Log.d("<<<<>>>>>", "alto despues: "+matrix[j][x].getHeight());
-                        //Log.d("<<<<<<<>>>>>", "ancho despues: "+ matrix[j][x].getWidth());
+            int resultado = view.getId() / findbomb.length;
+            int resto = view.getId() % findbomb.length;
+
+            for (int x = 0; x < findbomb.length; x++){
+                for (int y = 0; y < findbomb[0].length; y++) {
+                    if (findbomb[x][y] != 0) {
+                        ImageButton aux = matrix[x][y];
+                        switch (findbomb[x][y]) {
+                            case -1:
+                                if (x == resultado && y == resto){
+                                    aux.setImageResource(R.drawable.explosion);
+                                }
+                                else
+                                    aux.setImageResource(R.drawable.minita);
+                                break;
+                            case 1:
+                                aux.setImageResource(R.drawable.primer);
+                                break;
+                            case 2:
+                                aux.setImageResource(R.drawable.segond);
+                                break;
+                            case 3:
+                                aux.setImageResource(R.drawable.tercer);
+                                break;
+                            case 4:
+                                aux.setImageResource(R.drawable.quart);
+                                break;
+                            case 5:
+                                aux.setImageResource(R.drawable.cinque);
+                                break;
+                            case 6:
+                                aux.setImageResource(R.drawable.sise);
+                                break;
+                            case 7:
+                                aux.setImageResource(R.drawable.sete);
+                                break;
+                            case 8:
+                                aux.setImageResource(R.drawable.huite);
+
+                        }
+                        aux.setPadding(0, 0, 0, 0);
+                        android.view.ViewGroup.LayoutParams params = aux.getLayoutParams();
+                        params.height = aux.getHeight();
+                        params.width = aux.getWidth();
+                        aux.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        aux.setLayoutParams(params);
                     }
-                    /*int m = j+x;
-                    if (m == view.getId()){
-                        System.out.println("-----------------"+findbomb[j][x]);
-                    }*/
                 }
-                System.out.println();
             }
         }
     }
 
-    private void create(View view) {
+    private void createTable(View view) {
         if (!creado){
             creado = true;
-            int contador = 0;
             int a = view.getId();
             int[] b = new int[totalBombs];
 
@@ -188,6 +226,62 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void cleanTable(TableLayout table) {
+        int childCount = table.getChildCount();
+        table.removeViews(0, childCount);
+    }
+
+    private void openDiffActivity() {
+        Intent intent = new Intent(this, DifActivity.class);
+        mStartForResult.launch(intent);
+    }
+
+    private void start() {
+        Cdifficulty();
+        chronometer = Cronometro();
+    }
+
+    @SuppressLint("SetTextI18n")
+    public void Cdifficulty() {
+        switch (StaticCosas.Dif) {
+            case 1:
+                tv_dif.setText(R.string.dif1);
+                totalBombs = 4;
+                totalis = 5 * 5;
+                matrix = new ImageButton[5][5];
+                findbomb = new int[5][5];
+                bandera = new boolean[5][5];
+                break;
+            case 2:
+                tv_dif.setText(R.string.dif2);
+                totalBombs = 10;
+                totalis = 8 * 8;
+                matrix = new ImageButton[8][8];
+                findbomb = new int[8][8];
+                bandera = new boolean[8][8];
+                break;
+            case 3:
+                tv_dif.setText(R.string.dif3);
+                totalBombs = 40;
+                totalis = 16 * 16;
+                matrix = new ImageButton[16][16];
+                findbomb = new int[16][16];
+                bandera = new boolean[16][16];
+        }
+        createMatrix();
+        tv_bombs.setText(Integer.toString(totalBombs));
+    }
+
+    public void explode(Chronometer chronometer, View view){
+        int id = view.getId();
+        int resultado = id / findbomb.length;
+        int resto = id % findbomb.length;
+        if (creado && findbomb[resultado][resto] == -1){
+            chronometer.stop();
+            end(view);
+        }
+    }
+
     private Chronometer Cronometro() {
         chronometer = (Chronometer) findViewById(R.id.chronometer);
         chronometer.start();
@@ -197,60 +291,9 @@ public class MainActivity extends AppCompatActivity {
         return chronometer;
     }
 
-    private void openDiffActivity() {
-        Intent intent = new Intent(this, DifActivity.class);
-        mStartForResult.launch(intent);
-    }
+    public void updateUI(View view){
+        if (creado){
 
-    private void start() {
-        //Log.d("MainActivity", String.format("Esto va: %d", StaticCosas.Dif));
-        Cdifficulty();
-        chronometer = Cronometro();
-    }
-    public void Cdifficulty(){
-        switch (StaticCosas.Dif){
-            case 1:
-                tv_dif.setText(R.string.dif1);
-                totalBombs = 10;
-                totalis = 8*8;
-                matrix = new ImageButton[8][8];
-                findbomb = new int[8][8];
-                bandera = new boolean[8][8];
-                createMatrix();
-                Functions.UpdateUI();
-                break;
-            case 2:
-                tv_dif.setText(R.string.dif2);
-                totalBombs = 40;
-                totalis = 16*16;
-                matrix = new ImageButton[16][16];
-                findbomb = new int[16][16];
-                bandera = new boolean[16][16];
-                createMatrix();
-                Functions.UpdateUI();
-                break;
-            case 3:
-                tv_dif.setText(R.string.dif3);
-                totalBombs = 99;
-                totalis = 16*30;
-                matrix = new ImageButton[30][16];
-                findbomb = new int[30][16];
-                bandera = new boolean[30][16];
-                createMatrix();
-                Functions.UpdateUI();
-
-        }
-    }
-
-    public static class Functions {
-
-        public static void UpdateUI(){
-            tv_bombs.setText(Integer.toString(totalBombs));
-
-        }
-
-        public static void Explode(Chronometer chronometer){
-            chronometer.stop();
         }
 
     }
