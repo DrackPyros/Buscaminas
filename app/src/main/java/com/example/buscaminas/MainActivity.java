@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.transition.Explode;
@@ -103,6 +104,8 @@ public class MainActivity extends AppCompatActivity {
                 findbomb[i][j] = 0;
                 ImageButton btn = new ImageButton(this);
                 btn.setOnClickListener(btListener);
+                btn.setMinimumWidth(90);
+                btn.setMinimumHeight(90);
                 btn.setId(aux);
                 tr.addView(btn);
                 matrix[i][j] = btn;
@@ -122,11 +125,18 @@ public class MainActivity extends AppCompatActivity {
                 for (int x = 0; x<findbomb[0].length; x++){
                     System.out.print(findbomb[j][x]+" ");
                     if (findbomb[j][x] == -1){
+                        //Log.d("<<<<>>>>>", "alto antes: "+matrix[j][x].getHeight());
+                        //Log.d("<<<<<<<>>>>>", "ancho antes: "+ matrix[j][x].getWidth());
                         matrix[j][x].setImageResource(R.drawable.minita);
                         android.view.ViewGroup.LayoutParams params = matrix[j][x].getLayoutParams();
-                        params.height = 50;
-                        params.width = 5;
+                        params.height = (int)(matrix[j][x].getHeight()* 0.8);
+                        params.width = (int) (matrix[j][x].getWidth()* 0.8);
+                        matrix[j][x].setScaleX(0.5f);
+                        matrix[j][x].setScaleY(0.5f);
+                        matrix[j][x].setCropToPadding(false);
                         matrix[j][x].setLayoutParams(params);
+                        //Log.d("<<<<>>>>>", "alto despues: "+matrix[j][x].getHeight());
+                        //Log.d("<<<<<<<>>>>>", "ancho despues: "+ matrix[j][x].getWidth());
                     }
                     /*int m = j+x;
                     if (m == view.getId()){
@@ -152,64 +162,29 @@ public class MainActivity extends AppCompatActivity {
                         aux = rnd.nextInt(totalis);
                     }
                 }
-                int z = aux / findbomb.length;
-                int ñ = aux % findbomb.length;
-                findbomb[z][ñ] = -1;
+                int resultado = aux / findbomb.length;
+                int resto = aux % findbomb.length;
+                findbomb[resultado][resto] = -1;
                 b[i] = aux;
             }
-            /*for(int i = 0; i < findbomb.length; i++) {
-                for (int j = 0; j < findbomb[0].length; j++) {
+            for(int i = 0; i < findbomb.length; i++) { //Horizontal
+                for (int j = 0; j < findbomb[0].length; j++) {  //Vertical
+
                     if (findbomb[i][j] != -1) {
-                        if (i > 0) {
-                            if (j == 0) {
-                                //for (int m = 0; m < 8; m++) {
-                                    if (findbomb[i - 1][j] == -1 ||   //a2
-                                            findbomb[i - 1][j + 1] == -1 || //a3
-                                            findbomb[i][j + 1] == -1 ||   //b3
-                                            findbomb[i + 1][j] == -1 ||   //c2
-                                            findbomb[i + 1][j + 1] == -1) { //c3
-                                        contador++;
+
+                        for (int y = (j-1 >= 0 ? j-1 : j); y <= (j+1 < findbomb[0].length ? j+1 : j); y++){ //Vertical
+                            for (int x = (i-1 >= 0 ? i-1 : i); x <= (i+1 < findbomb.length ? i+1 : i); x++){ //Horizontal
+
+                                if ( y != j || x != i) {
+                                    if (findbomb[x][y] == -1) {
+                                        findbomb[i][j]++;
                                     }
-                                //}
-                            } else { //j > 0
-                                //for (int m = 0; m < 8; m++) {
-                                    if (findbomb[i - 1][j - 1] == -1 || //a1
-                                            findbomb[i - 1][j] == -1 ||   //a2
-                                            findbomb[i - 1][j + 1] == -1 || //a3
-                                            findbomb[i][j - 1] == -1 ||   //b1
-                                            findbomb[i][j + 1] == -1 ||   //b3
-                                            findbomb[i + 1][j - 1] == -1 || //c1
-                                            findbomb[i + 1][j] == -1 ||   //c2
-                                            findbomb[i + 1][j + 1] == -1) { //c3
-                                        contador++;
-                                    }
-                                //}
-                            }
-                        } else { //i == 0
-                            if (j == 0) {
-                                //for (int m = 0; m < 8; m++) {
-                                    if (findbomb[i][j + 1] == -1 ||   //b3
-                                            findbomb[i + 1][j] == -1 ||   //c2
-                                            findbomb[i + 1][j + 1] == -1) { //c3
-                                        contador++;
-                                    }
-                                //}
-                            } else { //j > 0
-                                //for (int m = 0; m < 8; m++) {
-                                    if (findbomb[i][j - 1] == -1 ||   //b1
-                                            findbomb[i][j + 1] == -1 ||   //b3
-                                            findbomb[i + 1][j - 1] == -1 || //c1
-                                            findbomb[i + 1][j] == -1 ||   //c2
-                                            findbomb[i + 1][j + 1] == -1) { //c3
-                                        contador++;
-                                    }
-                                //}
+                                }
                             }
                         }
                     }
-                    findbomb[i][j] = contador;
                 }
-            }*/
+            }
         }
     }
 
