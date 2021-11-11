@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.View;
@@ -25,20 +27,25 @@ import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
+    Chronometer chronometer;
+    private final Random rnd = new Random();
+    private ActivityResultLauncher<Intent> mStartForResult;
+
     private TableLayout tl_table;
 
     private TextView tv_bombs;
     private TextView tv_dif;
+    private TextView tv_end;
 
-    public static int totalBombs;
-    Chronometer chronometer;
-    private ActivityResultLauncher<Intent> mStartForResult;
+    public int totalBombs;
+    private int totalis;
+    private int visible;
+    private boolean creado = false;
+
     private static ImageButton[][] matrix;
     private static int[][] findbomb;
-    private static boolean[][] bandera;
-    private boolean creado = false;
-    private int totalis;
-    private final Random rnd = new Random();
+    private static boolean[][] flag;
+    private static boolean[][] shown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +58,12 @@ public class MainActivity extends AppCompatActivity {
 
         tv_bombs = findViewById(R.id.tv_bombs);
         tv_dif = findViewById(R.id.tv_dif);
+        tv_end = findViewById(R.id.tv_end);
+
+        tv_end.setVisibility(View.INVISIBLE);
+
+        tl_table.setPadding(10, 10, 10, 10);
+        tl_table.setBackgroundColor(Color.rgb(138,43,226));
 
         bt_new.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
                             Intent intent = result.getData();
                             StaticCosas.Dif = intent.getIntExtra(DifActivity.RATING_KEY, 0);
                             //Log.d("MainActivity", String.format("Rating: %d", StaticCosas.Dif));
-                            start();
+                            Cdifficulty();
                         } else {
                             Toast.makeText(MainActivity.this, getString(R.string.toast_text), Toast.LENGTH_SHORT).show();
                         }
@@ -83,18 +96,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 createTable(view);
-                end(view);
                 updateUI(view);
                 explode(chronometer, view);
+                wincon(chronometer);
             }
         };
         View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
+                wincon(chronometer);
                 int resultado = view.getId() / findbomb.length;
                 int resto = view.getId() % findbomb.length;
-                if (!bandera[resultado][resto]) {
-                    bandera[resultado][resto] = true;
+                if (!flag[resultado][resto]) {
+                    flag[resultado][resto] = true;
 
                     ImageButton aux = matrix[resultado][resto];
                     aux.setImageResource(R.drawable.bandera);
@@ -106,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                     aux.setLayoutParams(params);
                 }
                 else{
-                    bandera[resultado][resto] = false;
+                    flag[resultado][resto] = false;
                     matrix[resultado][resto].setImageResource(0);
                 }
                 return true;
@@ -120,8 +134,8 @@ public class MainActivity extends AppCompatActivity {
                 ImageButton btn = new ImageButton(this);
                 btn.setOnClickListener(clickListener);
                 btn.setOnLongClickListener(longClickListener);
-                btn.setMinimumWidth(90);
-                btn.setMinimumHeight(90);
+                btn.setMinimumWidth(100);
+                btn.setMinimumHeight(100);
                 btn.setId(id);
                 tr.addView(btn);
                 matrix[i][j] = btn;
@@ -141,50 +155,54 @@ public class MainActivity extends AppCompatActivity {
             for (int x = 0; x < findbomb.length; x++){
                 for (int y = 0; y < findbomb[0].length; y++) {
                     if (findbomb[x][y] != 0) {
-                        ImageButton aux = matrix[x][y];
-                        switch (findbomb[x][y]) {
-                            case -1:
-                                if (x == resultado && y == resto){
-                                    aux.setImageResource(R.drawable.explosion);
-                                }
-                                else
-                                    aux.setImageResource(R.drawable.minita);
-                                break;
-                            case 1:
-                                aux.setImageResource(R.drawable.primer);
-                                break;
-                            case 2:
-                                aux.setImageResource(R.drawable.segond);
-                                break;
-                            case 3:
-                                aux.setImageResource(R.drawable.tercer);
-                                break;
-                            case 4:
-                                aux.setImageResource(R.drawable.quart);
-                                break;
-                            case 5:
-                                aux.setImageResource(R.drawable.cinque);
-                                break;
-                            case 6:
-                                aux.setImageResource(R.drawable.sise);
-                                break;
-                            case 7:
-                                aux.setImageResource(R.drawable.sete);
-                                break;
-                            case 8:
-                                aux.setImageResource(R.drawable.huite);
-
-                        }
-                        aux.setPadding(0, 0, 0, 0);
-                        android.view.ViewGroup.LayoutParams params = aux.getLayoutParams();
-                        params.height = aux.getHeight();
-                        params.width = aux.getWidth();
-                        aux.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        aux.setLayoutParams(params);
+                        setimage(x, y, resultado, resto);
                     }
                 }
             }
         }
+    }
+
+    private void setimage(int x, int y, int resultado, int resto) {
+        ImageButton aux = matrix[x][y];
+        switch (findbomb[x][y]) {
+            case -1:
+                if (x == resultado && y == resto){
+                    aux.setImageResource(R.drawable.explosion);
+                }
+                else
+                    aux.setImageResource(R.drawable.minita);
+                break;
+            case 1:
+                aux.setImageResource(R.drawable.primer);
+                break;
+            case 2:
+                aux.setImageResource(R.drawable.segond);
+                break;
+            case 3:
+                aux.setImageResource(R.drawable.tercer);
+                break;
+            case 4:
+                aux.setImageResource(R.drawable.quart);
+                break;
+            case 5:
+                aux.setImageResource(R.drawable.cinque);
+                break;
+            case 6:
+                aux.setImageResource(R.drawable.sise);
+                break;
+            case 7:
+                aux.setImageResource(R.drawable.sete);
+                break;
+            case 8:
+                aux.setImageResource(R.drawable.huite);
+
+        }
+        aux.setPadding(0, 0, 0, 0);
+        android.view.ViewGroup.LayoutParams params = aux.getLayoutParams();
+        params.height = aux.getHeight();
+        params.width = aux.getWidth();
+        aux.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        aux.setLayoutParams(params);
     }
 
     private void createTable(View view) {
@@ -236,38 +254,29 @@ public class MainActivity extends AppCompatActivity {
         mStartForResult.launch(intent);
     }
 
-    private void start() {
-        Cdifficulty();
-        chronometer = Cronometro();
-    }
-
     @SuppressLint("SetTextI18n")
     public void Cdifficulty() {
+        chronometer = Cronometro();
         switch (StaticCosas.Dif) {
             case 1:
                 tv_dif.setText(R.string.dif1);
                 totalBombs = 4;
-                totalis = 5 * 5;
                 matrix = new ImageButton[5][5];
-                findbomb = new int[5][5];
-                bandera = new boolean[5][5];
                 break;
             case 2:
                 tv_dif.setText(R.string.dif2);
                 totalBombs = 10;
-                totalis = 8 * 8;
                 matrix = new ImageButton[8][8];
-                findbomb = new int[8][8];
-                bandera = new boolean[8][8];
                 break;
             case 3:
                 tv_dif.setText(R.string.dif3);
-                totalBombs = 40;
-                totalis = 16 * 16;
-                matrix = new ImageButton[16][16];
-                findbomb = new int[16][16];
-                bandera = new boolean[16][16];
+                totalBombs = 30;
+                matrix = new ImageButton[12][12];
         }
+        totalis = matrix.length * matrix[0].length;
+        findbomb = new int[matrix.length][matrix[0].length];
+        flag = new boolean[matrix.length][matrix[0].length];
+        shown = flag;
         createMatrix();
         tv_bombs.setText(Integer.toString(totalBombs));
     }
@@ -279,6 +288,16 @@ public class MainActivity extends AppCompatActivity {
         if (creado && findbomb[resultado][resto] == -1){
             chronometer.stop();
             end(view);
+            tv_end.setVisibility(View.VISIBLE);
+            tv_end.setText(R.string.lose);
+        }
+    }
+
+    private void wincon(Chronometer chronometer) {
+        if (creado && visible+totalBombs == totalis){
+            chronometer.stop();
+            tv_end.setVisibility(View.VISIBLE);
+            tv_end.setText(R.string.win);
         }
     }
 
@@ -293,8 +312,30 @@ public class MainActivity extends AppCompatActivity {
 
     public void updateUI(View view){
         if (creado){
-
+            int horizontal = view.getId() / findbomb.length;
+            int vertical = view.getId() % findbomb.length;
+            mostrar(horizontal, vertical);
         }
 
+    }
+
+    private void mostrar(int horizontal, int vertical) {
+        if(shown[horizontal][vertical]) return;
+        if (findbomb[horizontal][vertical] >= 0){
+            shown[horizontal][vertical] = true;
+            visible++;
+            setimage(horizontal, vertical, horizontal, vertical);
+        }
+        if (findbomb[horizontal][vertical] == 0){
+            //matrix[horizontal][vertical].setBackgroundColor(Color.WHITE);
+            matrix[horizontal][vertical].setVisibility(View.INVISIBLE);
+            for (int y = (vertical -1 >= 0 ? vertical -1 : vertical); y <= (vertical +1 < findbomb[0].length ? vertical +1 : vertical); y++) { //Vertical
+                for (int x = (horizontal - 1 >= 0 ? horizontal - 1 : horizontal); x <= (horizontal + 1 < findbomb.length ? horizontal + 1 : horizontal); x++) { //Horizontal
+                    if (y != vertical || x != horizontal) {
+                        mostrar(x, y);
+                    }
+                }
+            }
+        }
     }
 }

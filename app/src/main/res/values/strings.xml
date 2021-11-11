@@ -8,4 +8,6 @@
     <string name="newGame">New Game</string>
     <string name="Cdif">Change difficulty</string>
     <string name="toast_text">User cancelled</string>
+    <string name="win">YOU WIN</string>
+    <string name="lose">YOU LOSE</string>
 </resources>
