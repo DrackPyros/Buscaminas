@@ -41,11 +41,13 @@ public class MainActivity extends AppCompatActivity {
     private int totalis;
     private int visible;
     private boolean creado = false;
+    private boolean fin = false;
 
     private static ImageButton[][] matrix;
     private static int[][] findbomb;
     private static boolean[][] flag;
     private static boolean[][] shown;
+    private int Dif;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,8 +61,6 @@ public class MainActivity extends AppCompatActivity {
         tv_bombs = findViewById(R.id.tv_bombs);
         tv_dif = findViewById(R.id.tv_dif);
         tv_end = findViewById(R.id.tv_end);
-
-        tv_end.setVisibility(View.INVISIBLE);
 
         tl_table.setPadding(10, 10, 10, 10);
         tl_table.setBackgroundColor(Color.rgb(138,43,226));
@@ -80,8 +80,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onActivityResult(ActivityResult result) {
                         if (result.getResultCode() == Activity.RESULT_OK) {
                             Intent intent = result.getData();
-                            StaticCosas.Dif = intent.getIntExtra(DifActivity.RATING_KEY, 0);
-                            //Log.d("MainActivity", String.format("Rating: %d", StaticCosas.Dif));
+                            Dif = intent.getIntExtra(DifActivity.RATING_KEY, 0);
                             Cdifficulty();
                         } else {
                             Toast.makeText(MainActivity.this, getString(R.string.toast_text), Toast.LENGTH_SHORT).show();
@@ -98,32 +97,34 @@ public class MainActivity extends AppCompatActivity {
                 createTable(view);
                 updateUI(view);
                 explode(chronometer, view);
-                wincon(chronometer);
+                wincon(chronometer, view);
             }
         };
         View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                wincon(chronometer);
-                int resultado = view.getId() / findbomb.length;
-                int resto = view.getId() % findbomb.length;
-                if (!flag[resultado][resto]) {
-                    flag[resultado][resto] = true;
+                if (!fin) {
+                    wincon(chronometer, view);
+                    int resultado = view.getId() / findbomb.length;
+                    int resto = view.getId() % findbomb.length;
+                    if (!flag[resultado][resto]) {
+                        flag[resultado][resto] = true;
 
-                    ImageButton aux = matrix[resultado][resto];
-                    aux.setImageResource(R.drawable.bandera);
-                    aux.setPadding(0, 0, 0, 0);
-                    android.view.ViewGroup.LayoutParams params = aux.getLayoutParams();
-                    params.height = aux.getHeight();
-                    params.width = aux.getWidth();
-                    aux.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    aux.setLayoutParams(params);
-                }
-                else{
-                    flag[resultado][resto] = false;
-                    matrix[resultado][resto].setImageResource(0);
+                        ImageButton aux = matrix[resultado][resto];
+                        aux.setImageResource(R.drawable.bandera);
+                        aux.setPadding(0, 0, 0, 0);
+                        android.view.ViewGroup.LayoutParams params = aux.getLayoutParams();
+                        params.height = aux.getHeight();
+                        params.width = aux.getWidth();
+                        aux.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        aux.setLayoutParams(params);
+                    } else {
+                        flag[resultado][resto] = false;
+                        matrix[resultado][resto].setImageResource(0);
+                    }
                 }
                 return true;
+
             }
         };
         int id = 0;
@@ -134,8 +135,8 @@ public class MainActivity extends AppCompatActivity {
                 ImageButton btn = new ImageButton(this);
                 btn.setOnClickListener(clickListener);
                 btn.setOnLongClickListener(longClickListener);
-                btn.setMinimumWidth(100);
-                btn.setMinimumHeight(100);
+                btn.setMinimumWidth(90);
+                btn.setMinimumHeight(90);
                 btn.setId(id);
                 tr.addView(btn);
                 matrix[i][j] = btn;
@@ -148,13 +149,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void end(View view) {
-        if (creado){
+        if (creado && !fin){
+            fin = true;
             int resultado = view.getId() / findbomb.length;
             int resto = view.getId() % findbomb.length;
 
             for (int x = 0; x < findbomb.length; x++){
                 for (int y = 0; y < findbomb[0].length; y++) {
-                    if (findbomb[x][y] != 0) {
+                    if (!flag[x][y]) {
                         setimage(x, y, resultado, resto);
                     }
                 }
@@ -171,6 +173,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else
                     aux.setImageResource(R.drawable.minita);
+                break;
+            case 0:
+                aux.setImageResource(R.drawable.un_punto);
                 break;
             case 1:
                 aux.setImageResource(R.drawable.primer);
@@ -250,6 +255,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openDiffActivity() {
+        tv_end.setVisibility(View.INVISIBLE);
+        fin = false;
         Intent intent = new Intent(this, DifActivity.class);
         mStartForResult.launch(intent);
     }
@@ -257,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     public void Cdifficulty() {
         chronometer = Cronometro();
-        switch (StaticCosas.Dif) {
+        switch (Dif) {
             case 1:
                 tv_dif.setText(R.string.dif1);
                 totalBombs = 4;
@@ -290,14 +297,17 @@ public class MainActivity extends AppCompatActivity {
             end(view);
             tv_end.setVisibility(View.VISIBLE);
             tv_end.setText(R.string.lose);
+            tv_end.setTextColor(Color.RED);
         }
     }
 
-    private void wincon(Chronometer chronometer) {
+    private void wincon(Chronometer chronometer, View view) {
         if (creado && visible+totalBombs == totalis){
             chronometer.stop();
             tv_end.setVisibility(View.VISIBLE);
             tv_end.setText(R.string.win);
+            tv_end.setTextColor(Color.GREEN);
+            end(view);
         }
     }
 
@@ -327,8 +337,6 @@ public class MainActivity extends AppCompatActivity {
             setimage(horizontal, vertical, horizontal, vertical);
         }
         if (findbomb[horizontal][vertical] == 0){
-            //matrix[horizontal][vertical].setBackgroundColor(Color.WHITE);
-            matrix[horizontal][vertical].setVisibility(View.INVISIBLE);
             for (int y = (vertical -1 >= 0 ? vertical -1 : vertical); y <= (vertical +1 < findbomb[0].length ? vertical +1 : vertical); y++) { //Vertical
                 for (int x = (horizontal - 1 >= 0 ? horizontal - 1 : horizontal); x <= (horizontal + 1 < findbomb.length ? horizontal + 1 : horizontal); x++) { //Horizontal
                     if (y != vertical || x != horizontal) {
