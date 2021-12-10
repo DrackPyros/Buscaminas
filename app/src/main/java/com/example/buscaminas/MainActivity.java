@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
                     int resto = view.getId() % findbomb.length;
                     if (!flag[resultado][resto]) {
                         flag[resultado][resto] = true;
-
+                        visible++;
                         ImageButton aux = matrix[resultado][resto];
                         aux.setImageResource(R.drawable.bandera);
                         aux.setPadding(0, 0, 0, 0);
@@ -121,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         flag[resultado][resto] = false;
                         matrix[resultado][resto].setImageResource(0);
+                        visible--;
                     }
                 }
                 return true;
@@ -212,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void createTable(View view) {
         if (!creado){
+            visible = 0;
             creado = true;
             int a = view.getId();
             int[] b = new int[totalBombs];
@@ -302,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void wincon(Chronometer chronometer, View view) {
-        if (creado && visible+totalBombs == totalis){
+        if (creado && visible == totalis){
             chronometer.stop();
             tv_end.setVisibility(View.VISIBLE);
             tv_end.setText(R.string.win);
